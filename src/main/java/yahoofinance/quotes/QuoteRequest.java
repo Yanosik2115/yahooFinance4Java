@@ -48,6 +48,7 @@ public abstract class QuoteRequest<T> {
 
 		InputStreamReader is = new InputStreamReader(connection.getInputStream());
 		JsonNode node = objectMapper.readTree(is);
+		log.info("Execute result \n {}", node.toPrettyString());
 		return parseJson(node);
 	}
 

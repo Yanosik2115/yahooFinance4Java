@@ -17,4 +17,11 @@ public class YFinance {
 		stock.setStockQuoteSummary(request.execute());
 		return stock;
 	}
+
+	public static Stock get(String symbol, QuoteSummaryRequest.Module... modules) throws IOException {
+		QuoteRequest<StockQuoteSummary> request = new QuoteSummaryRequest(symbol, modules);
+		Stock stock = new Stock(symbol);
+		stock.setStockQuoteSummary(request.execute());
+		return stock;
+	}
 }

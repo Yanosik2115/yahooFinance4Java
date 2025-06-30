@@ -1,61 +1,25 @@
-package yahoofinance.util;
+package yahoofinance.model.common;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import yahoofinance.model.common.FormattedValue;
 
 import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-@Slf4j
-public class Utils {
+public abstract class AbstractQuoteSummaryModule<T extends QuoteSummaryModule<T>> implements QuoteSummaryModule<T>{
 
-	private Utils() {
-	}
-
-	@Getter
-	private static final Gson gson = new Gson();
-
-	@Getter
-	private static final ObjectMapper objectMapper = new ObjectMapper();
-
-	public static String getURLParameters(Map<String, String> params) {
-		StringBuilder sb = new StringBuilder();
-
-		for (Map.Entry<String, String> entry : params.entrySet()) {
-			if (!sb.isEmpty()) {
-				sb.append("&");
-			}
-			String key = entry.getKey();
-			String value = entry.getValue();
-
-			if (value.contains(",")) {
-				String[] parts = value.split(",");
-				StringBuilder sbValue = new StringBuilder();
-				for (String part : parts) {
-					if (!sbValue.isEmpty()) sbValue.append(",");
-					part = URLEncoder.encode(part, StandardCharsets.UTF_8);
-					sbValue.append(part);
-				}
-				value = sbValue.toString();
-			} else {
-				key = URLEncoder.encode(key, StandardCharsets.UTF_8);
-				value = URLEncoder.encode(value, StandardCharsets.UTF_8);
-			}
-
-			sb.append(String.format("%s=%s", key, value));
+	@Override
+	public T parse(JsonNode node) {
+		if (node == null || node.isEmpty()) {
+			return null;
 		}
-		return sb.toString();
+		return parseInternal(node);
 	}
 
-	public static String getStringValue(JsonNode node, String fieldName) {
+
+	protected abstract T parseInternal(JsonNode node);
+
+	protected String getStringValue(JsonNode node, String fieldName) {
 		JsonNode fieldNode = node.get(fieldName);
 		if (fieldNode != null && !fieldNode.isNull()) {
 			return fieldNode.asText();
@@ -63,7 +27,7 @@ public class Utils {
 		return null;
 	}
 
-	public static Integer getIntegerValue(JsonNode node, String fieldName) {
+	protected Integer getIntegerValue(JsonNode node, String fieldName) {
 		JsonNode fieldNode = node.get(fieldName);
 		if (fieldNode != null && !fieldNode.isNull() && fieldNode.isNumber()) {
 			return fieldNode.asInt();
@@ -71,7 +35,7 @@ public class Utils {
 		return null;
 	}
 
-	public static Long getLongValue(JsonNode node, String fieldName) {
+	protected Long getLongValue(JsonNode node, String fieldName) {
 		JsonNode fieldNode = node.get(fieldName);
 		if (fieldNode != null && !fieldNode.isNull() && fieldNode.isNumber()) {
 			return fieldNode.asLong();
@@ -79,7 +43,7 @@ public class Utils {
 		return null;
 	}
 
-	public static Boolean getBooleanValue(JsonNode node, String fieldName) {
+	protected Boolean getBooleanValue(JsonNode node, String fieldName) {
 		JsonNode fieldNode = node.get(fieldName);
 		if (fieldNode != null && !fieldNode.isNull() && fieldNode.isBoolean()) {
 			return fieldNode.asBoolean();
@@ -87,14 +51,14 @@ public class Utils {
 		return null;
 	}
 
-	public static Double getDoubleValue(JsonNode node, String fieldName) {
+	protected Double getDoubleValue(JsonNode node, String fieldName) {
 		if (node != null && node.has(fieldName) && !node.get(fieldName).isNull()) {
 			return node.get(fieldName).asDouble();
 		}
 		return null;
 	}
 
-	public static FormattedValue parseFormattedValue(JsonNode node) {
+	protected FormattedValue parseFormattedValue(JsonNode node) {
 		if (node == null || node.isNull()) {
 			return null;
 		}
@@ -120,7 +84,7 @@ public class Utils {
 		return formattedValue;
 	}
 
-	public static List<FormattedValue> parseFormattedValueArray(JsonNode arrayNode) {
+	protected List<FormattedValue> parseFormattedValueArray(JsonNode arrayNode) {
 		if (arrayNode == null || !arrayNode.isArray()) {
 			return new ArrayList<>();
 		}
@@ -133,5 +97,25 @@ public class Utils {
 			}
 		}
 		return formattedValues;
+	}
+
+	protected <M extends QuoteSummaryModule<M>> List<M> parseModuleArray(JsonNode arrayNode, Class<M> moduleClass) {
+		List<M> results = new ArrayList<>();
+
+		if (arrayNode != null && arrayNode.isArray()) {
+			for (JsonNode itemNode : arrayNode) {
+				try {
+					M instance = moduleClass.getDeclaredConstructor().newInstance();
+					M parsed = instance.parse(itemNode);
+					if (parsed != null) {
+						results.add(parsed);
+					}
+				} catch (Exception e) {
+					// Log error or handle as needed
+				}
+			}
+		}
+
+		return results;
 	}
 }
