@@ -1,6 +1,9 @@
 package yahoofinance.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URLEncoder;
@@ -12,6 +15,12 @@ public class Utils {
 
 	private Utils() {
 	}
+
+	@Getter
+	private static final Gson gson = new Gson();
+
+	@Getter
+	private static final ObjectMapper objectMapper = new ObjectMapper();
 
 	public static String getURLParameters(Map<String, String> params) {
 		StringBuilder sb = new StringBuilder();
