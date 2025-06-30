@@ -3,7 +3,7 @@ package yahoofinance.quotes;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import yahoofinance.util.RedirectableRequest;
+import yahoofinance.web.RedirectableRequest;
 import yahoofinance.util.Utils;
 
 import java.io.IOException;

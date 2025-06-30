@@ -66,8 +66,7 @@ public class Stock {
 						if (jsonNode.has("type") && jsonNode.has("message")) {
 							String base64Message = jsonNode.get("message").asText();
 							Pricing.PricingData pricingData = decodeYahooFinanceData(base64Message);
-							log.info(pricingData.toString());
-//							consumer.accept(pricingData);
+							consumer.accept(pricingData);
 						}
 					} catch (Exception e) {
 						log.error("Error parsing WebSocket message: {}", message, e);
@@ -86,7 +85,6 @@ public class Stock {
 
 			Map<String, Object> subscribeMessage = Map.of("subscribe", List.of(ticker));
 			String subscribeMessageJson = Utils.getGson().toJson(subscribeMessage);
-			log.info("Sending message: {}", subscribeMessageJson);
 
 			webSocketSession.getBasicRemote().sendObject(subscribeMessageJson);
 

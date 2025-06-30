@@ -1,4 +1,4 @@
-package yahoofinance.util;
+package yahoofinance.web;
 
 import lombok.Getter;
 
@@ -25,20 +25,11 @@ public class Crumb {
 		return !isExpired();
 	}
 
-
-	/**
-	 * Sets the crumb value and expiration time
-	 * @param value the crumb value
-	 * @param expire the expiration time
-	 */
 	public void setValue(String value, LocalDateTime expire) {
 		this.value = value;
 		this.expire = expire;
 	}
 
-	/**
-	 * Clears the crumb value and expiration
-	 */
 	public void clear() {
 		this.value = null;
 		this.expire = null;

@@ -8,9 +8,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * Main container class for stock quote summary data
- */
+
 @Setter
 @Getter
 public class StockQuoteSummary {
@@ -18,9 +16,6 @@ public class StockQuoteSummary {
 	private List<Result> result;
 	private String error;
 
-	/**
-	 * Main result class containing all stock information sections
-	 */
 	@Getter
 	@Setter
 	public static class Result {
@@ -31,9 +26,6 @@ public class StockQuoteSummary {
 		private FinancialData financialData;
 	}
 
-	/**
-	 * Company profile and officer information
-	 */
 	@Getter
 	@Setter
 	public static class AssetProfile {
@@ -66,9 +58,6 @@ public class StockQuoteSummary {
 
 	}
 
-	/**
-	 * Company officer information
-	 */
 	@Getter
 	@Setter
 	public static class CompanyOfficer {
@@ -84,9 +73,6 @@ public class StockQuoteSummary {
 
 	}
 
-	/**
-	 * Summary trading details and market data
-	 */
 	@Getter
 	@Setter
 	public static class SummaryDetail {
@@ -127,15 +113,9 @@ public class StockQuoteSummary {
 		private FormattedValue trailingAnnualDividendYield;
 		private String currency;
 		private Boolean tradeable;
-
-
-
-		// Add remaining getters and setters...
 	}
 
-	/**
-	 * Key financial statistics and ratios
-	 */
+
 	@Getter
 	@Setter
 	public static class DefaultKeyStatistics {
@@ -162,9 +142,6 @@ public class StockQuoteSummary {
 		private FormattedValue lastDividendDate;
 	}
 
-	/**
-	 * Basic quote information
-	 */
 	@Getter
 	@Setter
 	public static class QuoteType {
@@ -183,9 +160,6 @@ public class StockQuoteSummary {
 		private Integer maxAge;
 	}
 
-	/**
-	 * Financial performance data
-	 */
 	@Getter
 	@Setter
 	public static class FinancialData {
@@ -221,9 +195,7 @@ public class StockQuoteSummary {
 		private String financialCurrency;
 	}
 
-	/**
-	 * Utility class for formatted financial values
-	 */
+
 	@Getter
 	@Setter
 	@AllArgsConstructor

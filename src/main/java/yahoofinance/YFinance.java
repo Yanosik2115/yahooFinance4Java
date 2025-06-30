@@ -17,6 +17,4 @@ public class YFinance {
 		stock.setStockQuoteSummary(request.execute());
 		return stock;
 	}
-
-
 }

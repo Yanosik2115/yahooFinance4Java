@@ -1,4 +1,4 @@
-package yahoofinance.util;
+package yahoofinance.web;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -39,14 +39,11 @@ public class RedirectableRequest {
 		Map<String, String> enhancedProperties = new HashMap<>(requestProperties);
 
 		URL enhancedUrl = enhanceUrlWithCrumb(this.request);
-		enhancedProperties.put("Cookie", CrumbManager.getCookie());
+		enhancedProperties.put("Cookie", CookieManager.getCookie());
 
 		return executeRequestWithRedirects(enhancedUrl, enhancedProperties);
 	}
 
-	/**
-	 * Executes the HTTP request with redirect handling
-	 */
 	private URLConnection executeRequestWithRedirects(URL initialUrl, Map<String, String> requestProperties) throws IOException {
 		int redirectCount = 0;
 		URL currentUrl = initialUrl;
@@ -77,28 +74,22 @@ public class RedirectableRequest {
 				continue;
 			}
 
-			// Not a redirect, return the connection
 			return connection;
 		}
 
 		throw new IOException("Unexpected redirect handling error");
 	}
 
-	/**
-	 * Creates and configures an HTTP connection
-	 */
 	private HttpURLConnection createConnection(URL url, Map<String, String> requestProperties) throws IOException {
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setConnectTimeout(this.connectTimeout);
 		connection.setReadTimeout(this.readTimeout);
-		connection.setInstanceFollowRedirects(true); // Handle same-protocol redirects automatically
+		connection.setInstanceFollowRedirects(true);
 
-		// Add standard headers
 		connection.setRequestProperty("User-Agent",
 				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
 		connection.setRequestProperty("Accept", "*/*");
 
-		// Add custom request properties
 		for (Map.Entry<String, String> entry : requestProperties.entrySet()) {
 			connection.setRequestProperty(entry.getKey(), entry.getValue());
 		}
@@ -106,9 +97,6 @@ public class RedirectableRequest {
 		return connection;
 	}
 
-	/**
-	 * Enhances URL with crumb parameter
-	 */
 	private URL enhanceUrlWithCrumb(URL originalUrl) throws IOException {
 		try {
 			String crumb = CrumbManager.getCrumb();
@@ -137,9 +125,6 @@ public class RedirectableRequest {
 		}
 	}
 
-	/**
-	 * Checks if the response code indicates a redirect
-	 */
 	private boolean isRedirectResponse(int responseCode) {
 		return responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
 		       responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
