@@ -2,9 +2,9 @@ package yahoofinance;
 
 import lombok.extern.slf4j.Slf4j;
 import yahoofinance.model.Pricing;
-import yahoofinance.model.Stock;
+import yahoofinance.model.StockHistory;
 import yahoofinance.model.StockQuoteSummary;
-import yahoofinance.model.StockWebSocket;
+import yahoofinance.service.StockWebSocket;
 import yahoofinance.model.modules.SummaryProfile;
 import yahoofinance.quotes.QuoteSummaryRequest;
 
@@ -18,18 +18,23 @@ public class Main {
 
 	public static void main(String[] args) throws IOException {
 //		testNonDefaultModules();
-		testWss();
+//		testWss();
+		testStockHistory();
+	}
+
+	private static void testStockHistory() throws IOException {
+		StockHistory stockHistory = YFinance.getStockHistory("ODFL");
+		log.info(stockHistory.prettyPrintChart());
 	}
 
 	private static void testNonDefaultModules() throws IOException {
-		Stock stock = YFinance.get("MSFT", QuoteSummaryRequest.Module.SUMMARY_PROFILE, QuoteSummaryRequest.Module.CALENDAR_EVENTS);
-		StockQuoteSummary stockQuoteSummary = stock.getStockQuoteSummary();
+		StockQuoteSummary stockQuoteSummary = YFinance.getStockQuoteSummary("MSFT", QuoteSummaryRequest.Module.SUMMARY_PROFILE, QuoteSummaryRequest.Module.CALENDAR_EVENTS);
 		Optional<SummaryProfile> summaryProfileOptional = stockQuoteSummary.getModule(SummaryProfile.class);
 		summaryProfileOptional.ifPresent(summaryProfile -> log.info(summaryProfile.getAddress1()));
 	}
 
 	private static void testWss() {
-		StockWebSocket webSocket = new StockWebSocket();
+		StockWebSocket webSocket = YFinance.getStockWebSocket();
 		CountDownLatch latch = new CountDownLatch(1);
 
 		try {
@@ -73,7 +78,6 @@ public class Main {
 	}
 
 	private static void processPricingData(Pricing.PricingData pricingData) {
-		// Example processing - customize based on your needs
 		try {
 			String symbol = pricingData.getId();
 			double price = pricingData.getPrice();
@@ -82,13 +86,6 @@ public class Main {
 
 			log.info("Stock Update - {}: {} {} Vol: {}",
 					symbol, price, changePercent, volume);
-
-			// Add your custom logic here:
-			// - Store in database
-			// - Trigger alerts
-			// - Update UI
-			// - Send notifications
-			// etc.
 
 		} catch (Exception e) {
 			log.error("Error processing pricing data", e);

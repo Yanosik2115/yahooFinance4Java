@@ -1,8 +1,11 @@
 package yahoofinance;
 
 
-import yahoofinance.model.Stock;
+import org.jetbrains.annotations.Nullable;
+import yahoofinance.model.StockHistory;
 import yahoofinance.model.StockQuoteSummary;
+import yahoofinance.quotes.StockHistoryRequest;
+import yahoofinance.service.StockWebSocket;
 import yahoofinance.quotes.QuoteRequest;
 import yahoofinance.quotes.QuoteSummaryRequest;
 
@@ -11,17 +14,27 @@ import java.io.IOException;
 public class YFinance {
 
 
-	public static Stock get(String symbol) throws IOException {
+	public static StockQuoteSummary getStockQuoteSummary(String symbol) throws IOException {
 		QuoteRequest<StockQuoteSummary> request = new QuoteSummaryRequest(symbol);
-		Stock stock = new Stock(symbol);
-		stock.setStockQuoteSummary(request.execute());
-		return stock;
+		return request.execute();
 	}
 
-	public static Stock get(String symbol, QuoteSummaryRequest.Module... modules) throws IOException {
+	public static StockQuoteSummary getStockQuoteSummary(String symbol, QuoteSummaryRequest.Module... modules) throws IOException {
 		QuoteRequest<StockQuoteSummary> request = new QuoteSummaryRequest(symbol, modules);
-		Stock stock = new Stock(symbol);
-		stock.setStockQuoteSummary(request.execute());
-		return stock;
+		return request.execute();
+	}
+
+	public static StockWebSocket getStockWebSocket() {
+		return new StockWebSocket();
+	}
+
+	public static StockHistory getStockHistory(String symbol, StockHistoryRequest.ValidRanges range, StockHistoryRequest.ValidIntervals interval) throws IOException {
+		QuoteRequest<StockHistory> request = new StockHistoryRequest(symbol, range, interval);
+		return request.execute();
+	}
+
+	public static StockHistory getStockHistory(String symbol) throws IOException {
+		QuoteRequest<StockHistory> request = new StockHistoryRequest(symbol);
+		return request.execute();
 	}
 }

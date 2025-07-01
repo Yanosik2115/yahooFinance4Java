@@ -1,0 +1,300 @@
+package yahoofinance.quotes;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import yahoofinance.model.StockHistory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static yahoofinance.util.Utils.*;
+
+@Slf4j
+public class StockHistoryRequest extends QuoteRequest<StockHistory> {
+	private static final String STOCK_HISTORY_URL = "https://query2.finance.yahoo.com/v8/finance/chart";
+	private final ValidRanges range;
+	private final ValidIntervals interval;
+
+	@Getter
+	public enum ValidRanges {
+		ONE_DAY("1d"),
+		FIVE_DAYS("5d"),
+		ONE_MONTH("1mo"),
+		THREE_MONTHS("3mo"),
+		SIX_MONTHS("6mo"),
+		ONE_YEAR("1y"),
+		TWO_YEARS("2y"),
+		FIVE_YEARS("5y"),
+		TEN_YEARS("10y"),
+		YTD("ytd"),
+		MAX("max");
+
+		private final String range;
+
+		ValidRanges(String range) {
+			this.range = range;
+		}
+	}
+
+	@Getter
+	public enum ValidIntervals {
+		ONE_MINUTE("1m"),
+		TWO_MINUTES("2m"),
+		FIVE_MINUTES("5m"),
+		FIFTEEN_MINUTES("15m"),
+		THIRTY_MINUTES("30m"),
+		SIXTY_MINUTES("60m"),
+		NINTY_MINUTES("90m"),
+		ONE_HOUR("1h"),
+		FOUR_HOURS("4h"),
+		ONE_DAY("1d"),
+		FIVE_DAYS("5d"),
+		ONE_WEEK("1wk"),
+		ONE_MONTH("1mo"),
+		THREE_MONTHS("3mo");
+
+		private final String interval;
+
+		ValidIntervals(String interval) {
+			this.interval = interval;
+		}
+	}
+
+
+	public StockHistoryRequest(String symbol, ValidRanges range, ValidIntervals interval) {
+		super(symbol);
+		this.range = range;
+		this.interval = interval;
+	}
+
+	public StockHistoryRequest(String symbol) {
+		this(symbol, ValidRanges.ONE_MONTH, ValidIntervals.ONE_DAY);
+	}
+
+
+	@Override
+	public Map<String, String> getParams() {
+		Map<String, String> params = new HashMap<>();
+		params.put("range", range.getRange());
+		params.put("interval", interval.getInterval());
+		return params;
+	}
+
+	@Override
+	public String getURL() {
+		return STOCK_HISTORY_URL;
+	}
+
+	@Override
+	public StockHistory parseJson(JsonNode node) {
+		if (node == null || node.isNull()) {
+			return null;
+		}
+		StockHistory stockHistory = new StockHistory();
+
+		JsonNode chartNode = node.get("chart");
+
+		if (chartNode == null)
+			return stockHistory;
+
+		JsonNode errorNode = chartNode.get("error");
+		if (errorNode != null && !errorNode.isNull()) {
+			stockHistory.setError(errorNode.asText());
+			return stockHistory;
+		}
+
+		JsonNode resultNode = chartNode.get("result");
+		if (resultNode == null)
+			return stockHistory;
+
+		resultNode = resultNode.get(0);
+
+		try {
+			// Parse meta section
+			JsonNode metaNode = resultNode.get("meta");
+			if (metaNode != null && !metaNode.isNull()) {
+				stockHistory.setMeta(parseMeta(metaNode));
+			}
+
+			// Parse timestamp array
+			JsonNode timestampNode = resultNode.get("timestamp");
+			if (timestampNode != null && timestampNode.isArray()) {
+				List<Long> timestamps = new ArrayList<>();
+				for (JsonNode tsNode : timestampNode) {
+					if (!tsNode.isNull()) {
+						timestamps.add(tsNode.asLong());
+					}
+				}
+				stockHistory.setTimestamp(timestamps);
+			}
+
+			// Parse indicators section
+			JsonNode indicatorsNode = resultNode.get("indicators");
+			if (indicatorsNode != null && !indicatorsNode.isNull()) {
+				stockHistory.setIndicators(parseIndicators(indicatorsNode));
+			}
+
+		} catch (Exception e) {
+			log.error("Error parsing StockHistory JSON: " + e.getMessage());
+			return null;
+		}
+
+		return stockHistory;
+	}
+
+	private StockHistory.Meta parseMeta(JsonNode metaNode) {
+		StockHistory.Meta meta = new StockHistory.Meta();
+
+		meta.setCurrency(getStringValue(metaNode, "currency"));
+		meta.setSymbol(getStringValue(metaNode, "symbol"));
+		meta.setExchangeName(getStringValue(metaNode, "exchangeName"));
+		meta.setFullExchangeName(getStringValue(metaNode, "fullExchangeName"));
+		meta.setInstrumentType(getStringValue(metaNode, "instrumentType"));
+		meta.setTimezone(getStringValue(metaNode, "timezone"));
+		meta.setExchangeTimezoneName(getStringValue(metaNode, "exchangeTimezoneName"));
+		meta.setLongName(getStringValue(metaNode, "longName"));
+		meta.setShortName(getStringValue(metaNode, "shortName"));
+		meta.setDataGranularity(getStringValue(metaNode, "dataGranularity"));
+		meta.setRange(getStringValue(metaNode, "range"));
+
+		meta.setFirstTradeDate(getLongValue(metaNode, "firstTradeDate"));
+		meta.setRegularMarketTime(getLongValue(metaNode, "regularMarketTime"));
+		meta.setGmtoffset(getLongValue(metaNode, "gmtoffset"));
+		meta.setRegularMarketVolume(getLongValue(metaNode, "regularMarketVolume"));
+
+		meta.setRegularMarketPrice(getDoubleValue(metaNode, "regularMarketPrice"));
+		meta.setFiftyTwoWeekHigh(getDoubleValue(metaNode, "fiftyTwoWeekHigh"));
+		meta.setFiftyTwoWeekLow(getDoubleValue(metaNode, "fiftyTwoWeekLow"));
+		meta.setRegularMarketDayHigh(getDoubleValue(metaNode, "regularMarketDayHigh"));
+		meta.setRegularMarketDayLow(getDoubleValue(metaNode, "regularMarketDayLow"));
+		meta.setChartPreviousClose(getDoubleValue(metaNode, "chartPreviousClose"));
+		meta.setPreviousClose(getDoubleValue(metaNode, "previousClose"));
+
+		meta.setScale(getIntegerValue(metaNode, "scale"));
+		meta.setPriceHint(getIntegerValue(metaNode, "priceHint"));
+
+		meta.setHasPrePostMarketData(getBooleanValue(metaNode, "hasPrePostMarketData"));
+
+		JsonNode currentTradingPeriodNode = metaNode.get("currentTradingPeriod");
+		if (currentTradingPeriodNode != null && !currentTradingPeriodNode.isNull()) {
+			meta.setCurrentTradingPeriod(parseCurrentTradingPeriod(currentTradingPeriodNode));
+		}
+
+		JsonNode tradingPeriodsNode = metaNode.get("tradingPeriods");
+		if (tradingPeriodsNode != null && tradingPeriodsNode.isArray()) {
+			List<List<StockHistory.TradingPeriodValue>> tradingPeriods = new ArrayList<>();
+			for (JsonNode outerArray : tradingPeriodsNode) {
+				if (outerArray.isArray()) {
+					List<StockHistory.TradingPeriodValue> innerList = new ArrayList<>();
+					for (JsonNode periodNode : outerArray) {
+						innerList.add(parseTradingPeriodValue(periodNode));
+					}
+					tradingPeriods.add(innerList);
+				}
+			}
+			meta.setTradingPeriods(tradingPeriods);
+		}
+
+		JsonNode validRangesNode = metaNode.get("validRanges");
+		if (validRangesNode != null && validRangesNode.isArray()) {
+			List<String> validRanges = new ArrayList<>();
+			for (JsonNode rangeNode : validRangesNode) {
+				if (!rangeNode.isNull()) {
+					validRanges.add(rangeNode.asText());
+				}
+			}
+			meta.setValidRanges(validRanges);
+		}
+
+		return meta;
+	}
+
+	private StockHistory.CurrentTradingPeriod parseCurrentTradingPeriod(JsonNode node) {
+		StockHistory.CurrentTradingPeriod ctp = new StockHistory.CurrentTradingPeriod();
+
+		JsonNode preNode = node.get("pre");
+		if (preNode != null && !preNode.isNull()) {
+			ctp.setPre(parseTradingPeriodValue(preNode));
+		}
+
+		JsonNode regularNode = node.get("regular");
+		if (regularNode != null && !regularNode.isNull()) {
+			ctp.setRegular(parseTradingPeriodValue(regularNode));
+		}
+
+		JsonNode postNode = node.get("post");
+		if (postNode != null && !postNode.isNull()) {
+			ctp.setPost(parseTradingPeriodValue(postNode));
+		}
+
+		return ctp;
+	}
+
+	private StockHistory.TradingPeriodValue parseTradingPeriodValue(JsonNode node) {
+		StockHistory.TradingPeriodValue tpv = new StockHistory.TradingPeriodValue();
+
+		tpv.setTimezone(getStringValue(node, "timezone"));
+		tpv.setStart(getLongValue(node, "start"));
+		tpv.setEnd(getLongValue(node, "end"));
+		tpv.setGmtoffset(getLongValue(node, "gmtoffset"));
+
+		return tpv;
+	}
+
+	private StockHistory.Indicators parseIndicators(JsonNode indicatorsNode) {
+		StockHistory.Indicators indicators = new StockHistory.Indicators();
+
+		JsonNode quoteNode = indicatorsNode.get("quote");
+		if (quoteNode != null && quoteNode.isArray()) {
+			List<StockHistory.Quote> quotes = new ArrayList<>();
+			for (JsonNode qNode : quoteNode) {
+				quotes.add(parseQuote(qNode));
+			}
+			indicators.setQuote(quotes);
+		}
+
+		return indicators;
+	}
+
+	private StockHistory.Quote parseQuote(JsonNode quoteNode) {
+		StockHistory.Quote quote = new StockHistory.Quote();
+
+		JsonNode highNode = quoteNode.get("high");
+		if (highNode != null && highNode.isArray()) {
+			quote.setHigh(parseDoubleArray(highNode));
+		}
+
+		JsonNode lowNode = quoteNode.get("low");
+		if (lowNode != null && lowNode.isArray()) {
+			quote.setLow(parseDoubleArray(lowNode));
+		}
+
+		JsonNode openNode = quoteNode.get("open");
+		if (openNode != null && openNode.isArray()) {
+			quote.setOpen(parseDoubleArray(openNode));
+		}
+
+		JsonNode closeNode = quoteNode.get("close");
+		if (closeNode != null && closeNode.isArray()) {
+			quote.setClose(parseDoubleArray(closeNode));
+		}
+
+		JsonNode volumeNode = quoteNode.get("volume");
+		if (volumeNode != null && volumeNode.isArray()) {
+			List<Long> volumes = new ArrayList<>();
+			for (JsonNode vNode : volumeNode) {
+				if (vNode.isNull()) {
+					volumes.add(null);
+				} else {
+					volumes.add(vNode.asLong());
+				}
+			}
+			quote.setVolume(volumes);
+		}
+
+		return quote;
+	}
+}

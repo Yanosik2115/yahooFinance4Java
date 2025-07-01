@@ -1,9 +1,10 @@
-package yahoofinance.model;
+package yahoofinance.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import yahoofinance.model.Pricing;
 import yahoofinance.util.Utils;
 
 import javax.websocket.*;
@@ -30,11 +31,10 @@ public class StockWebSocket {
 	private Endpoint endpoint;
 
 	public StockWebSocket() {
-		WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-		container.setDefaultMaxSessionIdleTimeout(0);
-		container.setDefaultMaxTextMessageBufferSize(65536);
-		container.setDefaultMaxBinaryMessageBufferSize(65536);
-		this.container = container;
+		this.container = ContainerProvider.getWebSocketContainer();
+		this.container.setDefaultMaxSessionIdleTimeout(0);
+		this.container.setDefaultMaxTextMessageBufferSize(65536);
+		this.container.setDefaultMaxBinaryMessageBufferSize(65536);
 		this.heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
 	}
 

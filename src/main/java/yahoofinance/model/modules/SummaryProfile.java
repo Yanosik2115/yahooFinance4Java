@@ -3,10 +3,8 @@ package yahoofinance.model.modules;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.Setter;
-import yahoofinance.model.StockQuoteSummary;
 import yahoofinance.model.common.AbstractQuoteSummaryModule;
 import yahoofinance.model.common.CompanyOfficer;
-import yahoofinance.model.common.FormattedValue;
 
 import java.util.List;
 

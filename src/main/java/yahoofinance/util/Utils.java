@@ -134,4 +134,16 @@ public class Utils {
 		}
 		return formattedValues;
 	}
+
+	public static List<Double> parseDoubleArray(JsonNode arrayNode) {
+		List<Double> values = new ArrayList<>();
+		for (JsonNode valueNode : arrayNode) {
+			if (valueNode.isNull()) {
+				values.add(null);
+			} else {
+				values.add(valueNode.asDouble());
+			}
+		}
+		return values;
+	}
 }
