@@ -113,13 +113,11 @@ public class StockHistoryRequest extends QuoteRequest<StockHistory> {
 		resultNode = resultNode.get(0);
 
 		try {
-			// Parse meta section
 			JsonNode metaNode = resultNode.get("meta");
 			if (metaNode != null && !metaNode.isNull()) {
 				stockHistory.setMeta(parseMeta(metaNode));
 			}
 
-			// Parse timestamp array
 			JsonNode timestampNode = resultNode.get("timestamp");
 			if (timestampNode != null && timestampNode.isArray()) {
 				List<Long> timestamps = new ArrayList<>();
@@ -131,14 +129,13 @@ public class StockHistoryRequest extends QuoteRequest<StockHistory> {
 				stockHistory.setTimestamp(timestamps);
 			}
 
-			// Parse indicators section
 			JsonNode indicatorsNode = resultNode.get("indicators");
 			if (indicatorsNode != null && !indicatorsNode.isNull()) {
 				stockHistory.setIndicators(parseIndicators(indicatorsNode));
 			}
 
 		} catch (Exception e) {
-			log.error("Error parsing StockHistory JSON: " + e.getMessage());
+			log.error("Error parsing StockHistory JSON: {}", e.getMessage());
 			return null;
 		}
 

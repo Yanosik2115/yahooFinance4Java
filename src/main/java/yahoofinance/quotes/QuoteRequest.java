@@ -3,8 +3,8 @@ package yahoofinance.quotes;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import yahoofinance.web.RedirectableRequest;
 import yahoofinance.util.Utils;
+import yahoofinance.web.RedirectableRequest;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,10 +18,16 @@ public abstract class QuoteRequest<T> {
 
 	private final String symbol;
 	private final ObjectMapper objectMapper;
-	private static final int CONNECTION_TIMEOUT = 1000;
+	private static final int CONNECTION_TIMEOUT = 10000;
+	private static final int READ_TIMEOUT = 15000;
 
 	protected QuoteRequest(String symbol) {
 		this.symbol = symbol;
+		this.objectMapper = new ObjectMapper();
+	}
+
+	protected QuoteRequest() {
+		this.symbol = null;
 		this.objectMapper = new ObjectMapper();
 	}
 
@@ -31,25 +37,94 @@ public abstract class QuoteRequest<T> {
 		return Collections.emptyMap();
 	}
 
+
 	public abstract T parseJson(JsonNode node);
 
-	public final T execute() throws IOException {
-		URL request = new URL(getURL() + "/" + symbol + (getParams().isEmpty() ? "" : "?" + Utils.getURLParameters(getParams())));
-		RedirectableRequest redirectableRequest = new RedirectableRequest(request, 5);
-		redirectableRequest.setConnectTimeout(CONNECTION_TIMEOUT);
-		redirectableRequest.setReadTimeout(CONNECTION_TIMEOUT);
-		HttpURLConnection connection = (HttpURLConnection) redirectableRequest.openConnection();
-		if (connection.getResponseCode() >= 300) {
-			log.error("Error: {}", connection.getResponseMessage());
-			InputStreamReader es = new InputStreamReader(connection.getErrorStream());
-			JsonNode errorNode = objectMapper.readTree(es);
-			log.error(errorNode.toPrettyString());
+
+	protected boolean requiresSymbol() {
+		return true;
+	}
+
+	protected boolean useCookieAndCrumb() {
+		return true;
+	}
+
+	protected String buildRequestURL() {
+		StringBuilder urlBuilder = new StringBuilder(getURL());
+
+		if (requiresSymbol() && symbol != null && !symbol.isEmpty()) {
+			urlBuilder.append("/").append(symbol);
 		}
 
-		InputStreamReader is = new InputStreamReader(connection.getInputStream());
-		JsonNode node = objectMapper.readTree(is);
-//		log.debug("Execute result \n {}", node.toPrettyString());
-		return parseJson(node);
+		Map<String, String> params = getParams();
+		if (!params.isEmpty()) {
+			urlBuilder.append("?").append(Utils.getURLParameters(params));
+		}
+
+		return urlBuilder.toString();
+	}
+
+	protected HttpURLConnection setupConnection(URL url) throws IOException {
+		RedirectableRequest redirectableRequest = new RedirectableRequest(url, 5);
+		redirectableRequest.setConnectTimeout(CONNECTION_TIMEOUT);
+		redirectableRequest.setReadTimeout(READ_TIMEOUT);
+		return (HttpURLConnection) redirectableRequest.openConnection(useCookieAndCrumb());
+	}
+
+	protected void handleErrorResponse(HttpURLConnection connection) throws IOException {
+		int responseCode = connection.getResponseCode();
+		String responseMessage = connection.getResponseMessage();
+
+		log.error("HTTP Error {}: {}", responseCode, responseMessage);
+		log.error("Request URL: {}", connection.getURL());
+
+		try (InputStreamReader errorStream = new InputStreamReader(
+				connection.getErrorStream() != null ? connection.getErrorStream() : connection.getInputStream())) {
+			JsonNode errorNode = objectMapper.readTree(errorStream);
+			log.error("Error response body: {}", errorNode.toPrettyString());
+		} catch (Exception e) {
+			log.error("Could not parse error response", e);
+		}
+
+		throw new IOException(String.format("HTTP %d: %s", responseCode, responseMessage));
+	}
+
+	public final T execute() throws IOException {
+		if (requiresSymbol() && (symbol == null || symbol.trim().isEmpty())) {
+			throw new IllegalArgumentException("Symbol is required for this request type");
+		}
+
+		String requestUrl = buildRequestURL();
+		log.debug("Executing request: {}", requestUrl);
+
+		URL url = new URL(requestUrl);
+		HttpURLConnection connection = setupConnection(url);
+
+		try {
+			int responseCode = connection.getResponseCode();
+
+			if (responseCode >= 400) {
+				handleErrorResponse(connection);
+				return null;
+			}
+
+			try (InputStreamReader inputStream = new InputStreamReader(connection.getInputStream())) {
+				JsonNode node = objectMapper.readTree(inputStream);
+
+				if (log.isTraceEnabled()) {
+					log.trace("Response JSON: {}", node.toPrettyString());
+				}
+
+				return parseJson(node);
+			}
+
+		} catch (IOException e) {
+			log.error("Failed to execute request for {}: {}",
+					requiresSymbol() ? symbol : "market data", e.getMessage());
+			throw e;
+		} finally {
+			connection.disconnect();
+		}
 	}
 
 	protected final String getSymbol() {

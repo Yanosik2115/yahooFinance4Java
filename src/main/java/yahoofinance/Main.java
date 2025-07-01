@@ -2,8 +2,10 @@ package yahoofinance;
 
 import lombok.extern.slf4j.Slf4j;
 import yahoofinance.model.Pricing;
+import yahoofinance.model.RegionMarketSummary;
 import yahoofinance.model.StockHistory;
 import yahoofinance.model.StockQuoteSummary;
+import yahoofinance.quotes.Region;
 import yahoofinance.service.StockWebSocket;
 import yahoofinance.model.modules.SummaryProfile;
 import yahoofinance.quotes.QuoteSummaryRequest;
@@ -19,12 +21,19 @@ public class Main {
 	public static void main(String[] args) throws IOException {
 //		testNonDefaultModules();
 //		testWss();
-		testStockHistory();
+//		testStockHistory();
+		testRegionMargetSummary();
 	}
 
 	private static void testStockHistory() throws IOException {
 		StockHistory stockHistory = YFinance.getStockHistory("ODFL");
 		log.info(stockHistory.prettyPrintChart());
+	}
+
+	private static void testRegionMargetSummary() throws IOException {
+		RegionMarketSummary regionMarketSummary = YFinance.getRegionMarketSummary(Region.EUROPE);
+		log.info(regionMarketSummary.getMarketStatus().getFirst().getMessage());
+		log.info(regionMarketSummary.getMarketSummaries().getFirst().getExchangeTimezoneName());
 	}
 
 	private static void testNonDefaultModules() throws IOException {

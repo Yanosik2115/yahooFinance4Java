@@ -1,17 +1,20 @@
 package yahoofinance;
 
 
-import org.jetbrains.annotations.Nullable;
+import lombok.extern.slf4j.Slf4j;
+import yahoofinance.model.RegionMarketSummary;
 import yahoofinance.model.StockHistory;
 import yahoofinance.model.StockQuoteSummary;
-import yahoofinance.quotes.StockHistoryRequest;
+import yahoofinance.quotes.*;
 import yahoofinance.service.StockWebSocket;
-import yahoofinance.quotes.QuoteRequest;
-import yahoofinance.quotes.QuoteSummaryRequest;
 
 import java.io.IOException;
+import java.util.List;
 
+@Slf4j
 public class YFinance {
+
+	private YFinance(){}
 
 
 	public static StockQuoteSummary getStockQuoteSummary(String symbol) throws IOException {
@@ -37,4 +40,21 @@ public class YFinance {
 		QuoteRequest<StockHistory> request = new StockHistoryRequest(symbol);
 		return request.execute();
 	}
+
+	public static RegionMarketSummary getRegionMarketSummary(Region region) throws IOException {
+		RegionMarketSummary regionMarketSummary = new RegionMarketSummary();
+		QuoteRequest<List<RegionMarketSummary.MarketSummary>> summaryRequest = new MarketSummaryRequest(region);
+		List<RegionMarketSummary.MarketSummary> summaries = summaryRequest.execute();
+
+		QuoteRequest<List<RegionMarketSummary.MarketStatus>> statusRequest = new MarketStatusRequest(region);
+		List<RegionMarketSummary.MarketStatus> regionMarketStatus = statusRequest.execute();
+
+		regionMarketSummary.setRegion(region);
+		regionMarketSummary.setMarketSummaries(summaries);
+		regionMarketSummary.setMarketStatus(regionMarketStatus);
+
+		return regionMarketSummary;
+	}
+
+
 }
