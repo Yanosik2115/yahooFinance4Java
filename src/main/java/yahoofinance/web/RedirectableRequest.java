@@ -32,16 +32,23 @@ public class RedirectableRequest {
 	}
 
 	public URLConnection openConnection() throws IOException {
-		return openConnection(new HashMap<>());
+		return openConnection(new HashMap<>(), true);
 	}
 
-	public URLConnection openConnection(Map<String, String> requestProperties) throws IOException {
+	public URLConnection openConnection(boolean useCookieAndCrumb) throws IOException {
+		return openConnection(new HashMap<>(), useCookieAndCrumb);
+	}
+
+	public URLConnection openConnection(Map<String, String> requestProperties, boolean useCookieAndCrumb) throws IOException {
 		Map<String, String> enhancedProperties = new HashMap<>(requestProperties);
 
-		URL enhancedUrl = enhanceUrlWithCrumb(this.request);
-		enhancedProperties.put("Cookie", CookieManager.getCookie());
-
-		return executeRequestWithRedirects(enhancedUrl, enhancedProperties);
+		if (useCookieAndCrumb) {
+			URL enhancedUrl = enhanceUrlWithCrumb(this.request);
+			enhancedProperties.put("Cookie", CookieManager.getCookie());
+			return executeRequestWithRedirects(enhancedUrl, enhancedProperties);
+		} else {
+			return executeRequestWithRedirects(this.request, requestProperties);
+		}
 	}
 
 	private URLConnection executeRequestWithRedirects(URL initialUrl, Map<String, String> requestProperties) throws IOException {
