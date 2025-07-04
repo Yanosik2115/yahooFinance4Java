@@ -9,6 +9,7 @@ import yahoofinance.web.RedirectableRequest;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
@@ -17,18 +18,16 @@ import java.util.Map;
 public abstract class QuoteRequest<T> {
 
 	private final String symbol;
-	private final ObjectMapper objectMapper;
+	private final ObjectMapper objectMapper = new ObjectMapper();
 	private static final int CONNECTION_TIMEOUT = 10000;
 	private static final int READ_TIMEOUT = 15000;
 
 	protected QuoteRequest(String symbol) {
 		this.symbol = symbol;
-		this.objectMapper = new ObjectMapper();
 	}
 
 	protected QuoteRequest() {
 		this.symbol = null;
-		this.objectMapper = new ObjectMapper();
 	}
 
 	public abstract String getURL();
@@ -95,9 +94,9 @@ public abstract class QuoteRequest<T> {
 		}
 
 		String requestUrl = buildRequestURL();
-		log.debug("Executing request: {}", requestUrl);
+//		log.debug("Executing request: {}", requestUrl);
 
-		URL url = new URL(requestUrl);
+		URL url = URI.create(requestUrl).toURL();
 		HttpURLConnection connection = setupConnection(url);
 
 		try {
@@ -114,7 +113,7 @@ public abstract class QuoteRequest<T> {
 				if (log.isTraceEnabled()) {
 					log.trace("Response JSON: {}", node.toPrettyString());
 				}
-
+//				log.debug(node.toPrettyString());
 				return parseJson(node);
 			}
 

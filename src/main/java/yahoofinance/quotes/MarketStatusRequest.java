@@ -2,7 +2,8 @@ package yahoofinance.quotes;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import yahoofinance.model.RegionMarketSummary;
+import yahoofinance.model.market.Region;
+import yahoofinance.model.market.RegionMarketSummary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +50,7 @@ public class MarketStatusRequest extends QuoteRequest<List<RegionMarketSummary.M
 	@Override
 	public List<RegionMarketSummary.MarketStatus> parseJson(JsonNode node) {
 		if (node == null || node.isNull()) {
-			return null;
+			return List.of();
 		}
 
 		try {
@@ -59,10 +60,10 @@ public class MarketStatusRequest extends QuoteRequest<List<RegionMarketSummary.M
 			}
 		} catch (Exception e) {
 			log.error("Error parsing MarketStatus JSON: {}", e.getMessage(), e);
-			return null;
+			return List.of();
 		}
 
-		return null;
+		return List.of();
 	}
 
 	private List<RegionMarketSummary.MarketStatus> parseMarketStatusResponse(JsonNode financeNode) {

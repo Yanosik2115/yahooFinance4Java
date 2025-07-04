@@ -55,7 +55,7 @@ public class RedirectableRequest {
 		int redirectCount = 0;
 		URL currentUrl = initialUrl;
 
-		log.debug("Executing request url: {}", currentUrl);
+//		log.debug("Executing request url: {}", currentUrl);
 
 		while (redirectCount <= this.protocolRedirectLimit) {
 			HttpURLConnection connection = createConnection(currentUrl, requestProperties);
@@ -69,6 +69,7 @@ public class RedirectableRequest {
 				}
 
 				currentUrl = new URL(currentUrl, location);
+
 				redirectCount++;
 
 				if (redirectCount > this.protocolRedirectLimit) {

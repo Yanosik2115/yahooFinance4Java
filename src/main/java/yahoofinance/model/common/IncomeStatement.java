@@ -3,6 +3,7 @@ package yahoofinance.model.common;
 import lombok.Getter;
 import lombok.Setter;
 import com.fasterxml.jackson.databind.JsonNode;
+import static yahoofinance.util.Utils.*;
 
 @Getter
 @Setter

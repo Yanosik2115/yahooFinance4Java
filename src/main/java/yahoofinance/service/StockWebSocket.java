@@ -38,9 +38,33 @@ public class StockWebSocket {
 		this.heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
 	}
 
+	private void messageHandler(String message) {
+		log.debug("Received WebSocket message: {}", message);
+		try {
+			JsonNode jsonNode = Utils.getObjectMapper().readTree(message);
+
+			if (jsonNode.has("type") && jsonNode.has("message")) {
+				String type = jsonNode.get("type").asText();
+
+				if ("pricing".equals(type)) {
+					String base64Message = jsonNode.get("message").asText();
+					Pricing.PricingData pricingData = decodeYahooFinanceData(base64Message);
+					if (messageConsumer != null) {
+						messageConsumer.accept(pricingData);
+					}
+				} else {
+					log.info("Received non-data message type: {}", type);
+				}
+			} else {
+				log.debug("Received message without expected structure: {}", message);
+			}
+		} catch (Exception e) {
+			log.error("Error parsing WebSocket message: {}", message, e);
+		}
+	}
+
 	public void listen(Consumer<Pricing.PricingData> consumer) {
 		this.messageConsumer = consumer;
-
 		this.endpoint = new Endpoint() {
 			@Override
 			public void onClose(Session session, CloseReason closeReason) {
@@ -56,32 +80,7 @@ public class StockWebSocket {
 			@Override
 			public void onOpen(Session session, EndpointConfig endpointConfig) {
 				webSocketSession = session;
-
-				session.addMessageHandler(String.class, message -> {
-					log.debug("Received WebSocket message: {}", message);
-					try {
-						JsonNode jsonNode = Utils.getObjectMapper().readTree(message);
-
-						if (jsonNode.has("type") && jsonNode.has("message")) {
-							String type = jsonNode.get("type").asText();
-
-							if ("pricing".equals(type)) {
-								String base64Message = jsonNode.get("message").asText();
-								Pricing.PricingData pricingData = decodeYahooFinanceData(base64Message);
-								if (messageConsumer != null) {
-									messageConsumer.accept(pricingData);
-								}
-							} else {
-								log.info("Received non-data message type: {}", type);
-							}
-						} else {
-							log.debug("Received message without expected structure: {}", message);
-						}
-					} catch (Exception e) {
-						log.error("Error parsing WebSocket message: {}", message, e);
-					}
-				});
-
+				session.addMessageHandler(String.class, message -> messageHandler(message));
 				log.info("WebSocket connection established successfully");
 				startHeartbeat();
 			}

@@ -2,12 +2,20 @@ package yahoofinance;
 
 import lombok.extern.slf4j.Slf4j;
 import yahoofinance.model.Pricing;
-import yahoofinance.model.RegionMarketSummary;
+import yahoofinance.model.financials.BalanceSheetSummary;
+import yahoofinance.model.financials.CashFlowSummary;
+import yahoofinance.model.financials.FinancialStatementSummary;
+import yahoofinance.model.financials.IncomeSummary;
+import yahoofinance.model.market.RegionMarketSummary;
 import yahoofinance.model.StockHistory;
 import yahoofinance.model.StockQuoteSummary;
-import yahoofinance.quotes.Region;
+import yahoofinance.model.financials.enums.Financials;
+import yahoofinance.model.market.Region;
+import yahoofinance.model.financials.enums.TimescaleTranslation;
+import yahoofinance.model.market.modules.CalendarEvents;
+import yahoofinance.model.market.modules.FinancialData;
 import yahoofinance.service.StockWebSocket;
-import yahoofinance.model.modules.SummaryProfile;
+import yahoofinance.model.market.modules.SummaryProfile;
 import yahoofinance.quotes.QuoteSummaryRequest;
 
 import java.io.IOException;
@@ -19,10 +27,29 @@ import java.util.concurrent.CountDownLatch;
 public class Main {
 
 	public static void main(String[] args) throws IOException {
-//		testNonDefaultModules();
+		testNonDefaultModules();
 //		testWss();
 //		testStockHistory();
-		testRegionMargetSummary();
+//		testRegionMargetSummary();
+		testFinancialTimeSeries();
+	}
+
+	private static void testFinancialTimeSeries() throws IOException {
+		IncomeSummary incomeSummary = YFinance.getStockIncomeSummary("AAPL", TimescaleTranslation.QUARTERLY);
+		for (FinancialStatementSummary.FinancialDataPoint financialDataPoint : incomeSummary.getResult().getNetIncome()) {
+			log.info(financialDataPoint.prettyPrint());
+		}
+
+		CashFlowSummary cashFlowSummary = YFinance.getStockCashFlowSummary("PLTR", TimescaleTranslation.TRAILING);
+		for (FinancialStatementSummary.FinancialDataPoint financialDataPoint : cashFlowSummary.getResult().getCapitalExpenditure()) {
+			log.info(financialDataPoint.prettyPrint());
+		}
+
+		BalanceSheetSummary balanceSheetSummary = YFinance.getStockBalanceSheetSummary("MSFT", TimescaleTranslation.YEARLY);
+		for (FinancialStatementSummary.FinancialDataPoint financialDataPoint : balanceSheetSummary.getResult().getCashFinancial()) {
+			log.info(financialDataPoint.prettyPrint());
+		}
+
 	}
 
 	private static void testStockHistory() throws IOException {
@@ -40,6 +67,8 @@ public class Main {
 		StockQuoteSummary stockQuoteSummary = YFinance.getStockQuoteSummary("MSFT", QuoteSummaryRequest.Module.SUMMARY_PROFILE, QuoteSummaryRequest.Module.CALENDAR_EVENTS);
 		Optional<SummaryProfile> summaryProfileOptional = stockQuoteSummary.getModule(SummaryProfile.class);
 		summaryProfileOptional.ifPresent(summaryProfile -> log.info(summaryProfile.getAddress1()));
+		Optional<CalendarEvents> calendarEventsOptional = stockQuoteSummary.getModule(CalendarEvents.class);
+		calendarEventsOptional.ifPresent(calendarEvents -> log.info(calendarEvents.getEarnings().toString()));
 	}
 
 	private static void testWss() {

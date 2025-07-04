@@ -2,10 +2,9 @@ package yahoofinance.quotes;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import yahoofinance.model.RegionMarketSummary;
-import yahoofinance.model.common.FormattedValue;
+import yahoofinance.model.market.Region;
+import yahoofinance.model.market.RegionMarketSummary;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -56,7 +55,7 @@ public class MarketSummaryRequest extends QuoteRequest<List<RegionMarketSummary.
 	@Override
 	public List<RegionMarketSummary.MarketSummary> parseJson(JsonNode node) {
 		if (node == null || node.isNull()) {
-			return null;
+			return List.of();
 		}
 
 		try {
@@ -69,7 +68,6 @@ public class MarketSummaryRequest extends QuoteRequest<List<RegionMarketSummary.
 			}
 		} catch (Exception e) {
 			log.error("Error parsing MarketSummary JSON: {}", e.getMessage(), e);
-			return null;
 		}
 		return List.of();
 	}

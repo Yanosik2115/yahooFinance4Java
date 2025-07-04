@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import yahoofinance.model.StockQuoteSummary;
 import yahoofinance.model.common.QuoteSummaryModule;
-import yahoofinance.model.modules.*;
+import yahoofinance.model.market.modules.*;
 import java.util.*;
 
 @Slf4j
@@ -155,7 +155,7 @@ public class QuoteSummaryRequest extends QuoteRequest<StockQuoteSummary> {
 
 		// Parse results
 		JsonNode resultNode = quoteSummaryNode.get("result");
-		if (resultNode != null && resultNode.isArray() && resultNode.size() > 0) {
+		if (resultNode != null && resultNode.isArray() && !resultNode.isEmpty()) {
 			JsonNode firstResult = resultNode.get(0);
 			List<QuoteSummaryModule<?>> modules = parseModules(firstResult);
 			quoteSummary.setModules(modules);
