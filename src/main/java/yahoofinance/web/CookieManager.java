@@ -1,11 +1,13 @@
 package yahoofinance.web;
 
 import lombok.extern.slf4j.Slf4j;
+import yahoofinance.exception.CookieException;
 import yahoofinance.util.ConnectionUtils;
 
 import java.io.IOException;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -22,7 +24,7 @@ public final class CookieManager {
 		throw new AssertionError("CookieManager should not be instantiated");
 	}
 
-	public static String getCookie() throws IOException {
+	public static String getCookie() throws CookieException {
 		if (cookie != null && !cookie.isEmpty()) {
 			return cookie;
 		}
@@ -50,11 +52,11 @@ public final class CookieManager {
 		}
 	}
 
-	private static void initializeCookie() throws IOException {
+	private static void initializeCookie() throws CookieException {
 		log.debug("Initializing cookie from Yahoo Finance");
 
 		try {
-			URL url = new URL(COOKIE_SCRAPE_URL);
+			URL url = URI.create(COOKIE_SCRAPE_URL).toURL();
 			HttpURLConnection connection = ConnectionUtils.createBasicConnection(url, CONNECTION_TIMEOUT);
 
 			int responseCode = connection.getResponseCode();
@@ -75,7 +77,7 @@ public final class CookieManager {
 
 		} catch (IOException e) {
 			log.error("Failed to initialize cookie", e);
-			throw new IOException("Unable to retrieve Yahoo Finance cookie", e);
+			throw new CookieException("Unable to retrieve Yahoo Finance cookie", e);
 		}
 	}
 

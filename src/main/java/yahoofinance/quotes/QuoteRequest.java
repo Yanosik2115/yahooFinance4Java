@@ -3,6 +3,8 @@ package yahoofinance.quotes;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import yahoofinance.exception.ConnectionException;
+import yahoofinance.exception.YFinanceException;
 import yahoofinance.util.Utils;
 import yahoofinance.web.RedirectableRequest;
 
@@ -63,7 +65,7 @@ public abstract class QuoteRequest<T> {
 		return urlBuilder.toString();
 	}
 
-	protected HttpURLConnection setupConnection(URL url) throws IOException {
+	protected HttpURLConnection setupConnection(URL url) throws YFinanceException {
 		RedirectableRequest redirectableRequest = new RedirectableRequest(url, 5);
 		redirectableRequest.setConnectTimeout(CONNECTION_TIMEOUT);
 		redirectableRequest.setReadTimeout(READ_TIMEOUT);
@@ -88,18 +90,18 @@ public abstract class QuoteRequest<T> {
 		throw new IOException(String.format("HTTP %d: %s", responseCode, responseMessage));
 	}
 
-	public final T execute() throws IOException {
+	public final T execute() throws YFinanceException {
 		if (requiresSymbol() && (symbol == null || symbol.trim().isEmpty())) {
 			throw new IllegalArgumentException("Symbol is required for this request type");
 		}
 
 		String requestUrl = buildRequestURL();
+		HttpURLConnection connection = null;
 //		log.debug("Executing request: {}", requestUrl);
 
-		URL url = URI.create(requestUrl).toURL();
-		HttpURLConnection connection = setupConnection(url);
-
 		try {
+			URL url = URI.create(requestUrl).toURL();
+			connection = setupConnection(url);
 			int responseCode = connection.getResponseCode();
 
 			if (responseCode >= 400) {
@@ -118,10 +120,12 @@ public abstract class QuoteRequest<T> {
 			}
 
 		} catch (IOException e) {
+			String ticker = requiresSymbol() ? symbol : "market data";
 			log.error("Failed to execute request for {}: {}",
 					requiresSymbol() ? symbol : "market data", e.getMessage());
-			throw e;
+			throw new ConnectionException("Failed to execute request for " + ticker + ": " + e.getMessage());
 		} finally {
+			assert connection != null;
 			connection.disconnect();
 		}
 	}

@@ -2,6 +2,7 @@ package yahoofinance;
 
 
 import lombok.extern.slf4j.Slf4j;
+import yahoofinance.exception.YFinanceException;
 import yahoofinance.model.*;
 import yahoofinance.model.financials.BalanceSheetSummary;
 import yahoofinance.model.financials.CashFlowSummary;
@@ -13,7 +14,6 @@ import yahoofinance.model.market.RegionMarketSummary;
 import yahoofinance.quotes.*;
 import yahoofinance.service.StockWebSocket;
 
-import java.io.IOException;
 import java.util.List;
 
 @Slf4j
@@ -22,12 +22,12 @@ public class YFinance {
 	private YFinance() {
 	}
 
-	public static StockQuoteSummary getStockQuoteSummary(String symbol) throws IOException {
+	public static StockQuoteSummary getStockQuoteSummary(String symbol) throws YFinanceException {
 		QuoteRequest<StockQuoteSummary> request = new QuoteSummaryRequest(symbol);
 		return request.execute();
 	}
 
-	public static StockQuoteSummary getStockQuoteSummary(String symbol, QuoteSummaryRequest.Module... modules) throws IOException {
+	public static StockQuoteSummary getStockQuoteSummary(String symbol, QuoteSummaryRequest.Module... modules) throws YFinanceException {
 		QuoteRequest<StockQuoteSummary> request = new QuoteSummaryRequest(symbol, modules);
 		return request.execute();
 	}
@@ -36,17 +36,17 @@ public class YFinance {
 		return new StockWebSocket();
 	}
 
-	public static StockHistory getStockHistory(String symbol, StockHistoryRequest.ValidRanges range, StockHistoryRequest.ValidIntervals interval) throws IOException {
+	public static StockHistory getStockHistory(String symbol, StockHistoryRequest.ValidRanges range, StockHistoryRequest.ValidIntervals interval) throws YFinanceException {
 		QuoteRequest<StockHistory> request = new StockHistoryRequest(symbol, range, interval);
 		return request.execute();
 	}
 
-	public static StockHistory getStockHistory(String symbol) throws IOException {
+	public static StockHistory getStockHistory(String symbol) throws YFinanceException {
 		QuoteRequest<StockHistory> request = new StockHistoryRequest(symbol);
 		return request.execute();
 	}
 
-	public static RegionMarketSummary getRegionMarketSummary(Region region) throws IOException {
+	public static RegionMarketSummary getRegionMarketSummary(Region region) throws YFinanceException {
 		RegionMarketSummary regionMarketSummary = new RegionMarketSummary();
 		QuoteRequest<List<RegionMarketSummary.MarketSummary>> summaryRequest = new MarketSummaryRequest(region);
 		List<RegionMarketSummary.MarketSummary> summaries = summaryRequest.execute();
@@ -61,17 +61,17 @@ public class YFinance {
 		return regionMarketSummary;
 	}
 
-	public static IncomeSummary getStockIncomeSummary(String symbol, TimescaleTranslation timescaleTranslation) throws IOException {
+	public static IncomeSummary getStockIncomeSummary(String symbol, TimescaleTranslation timescaleTranslation) throws YFinanceException {
 		FinancialsTimeSeriesRequest request = new FinancialsTimeSeriesRequest(symbol, timescaleTranslation, Financials.INCOME);
 		return (IncomeSummary) request.execute();
 	}
 
-	public static CashFlowSummary getStockCashFlowSummary(String symbol, TimescaleTranslation timescaleTranslation) throws IOException {
+	public static CashFlowSummary getStockCashFlowSummary(String symbol, TimescaleTranslation timescaleTranslation) throws YFinanceException {
 		FinancialsTimeSeriesRequest request = new FinancialsTimeSeriesRequest(symbol, timescaleTranslation, Financials.CASH_FLOW);
 		return (CashFlowSummary) request.execute();
 	}
 
-	public static BalanceSheetSummary getStockBalanceSheetSummary(String symbol, TimescaleTranslation timescaleTranslation) throws IOException {
+	public static BalanceSheetSummary getStockBalanceSheetSummary(String symbol, TimescaleTranslation timescaleTranslation) throws YFinanceException {
 		FinancialsTimeSeriesRequest request = new FinancialsTimeSeriesRequest(symbol, timescaleTranslation, Financials.BALANCE_SHEET);
 		return (BalanceSheetSummary) request.execute();
 	}

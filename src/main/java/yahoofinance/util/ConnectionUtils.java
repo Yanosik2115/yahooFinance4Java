@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
@@ -28,7 +29,7 @@ public final class ConnectionUtils {
 	}
 
 	public static URLConnection createExternalConnection(String url, @Nullable Map<String, String> requestProperties) throws IOException {
-		URL request = new URL(url);
+		URL request = URI.create(url).toURL();
 		HttpURLConnection connection = createBasicConnection(request, 5000);
 
 		if (requestProperties != null) {

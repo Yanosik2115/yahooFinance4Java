@@ -1,6 +1,7 @@
 package yahoofinance;
 
 import lombok.extern.slf4j.Slf4j;
+import yahoofinance.exception.YFinanceException;
 import yahoofinance.model.Pricing;
 import yahoofinance.model.financials.BalanceSheetSummary;
 import yahoofinance.model.financials.CashFlowSummary;
@@ -9,11 +10,9 @@ import yahoofinance.model.financials.IncomeSummary;
 import yahoofinance.model.market.RegionMarketSummary;
 import yahoofinance.model.StockHistory;
 import yahoofinance.model.StockQuoteSummary;
-import yahoofinance.model.financials.enums.Financials;
 import yahoofinance.model.market.Region;
 import yahoofinance.model.financials.enums.TimescaleTranslation;
 import yahoofinance.model.market.modules.CalendarEvents;
-import yahoofinance.model.market.modules.FinancialData;
 import yahoofinance.service.StockWebSocket;
 import yahoofinance.model.market.modules.SummaryProfile;
 import yahoofinance.quotes.QuoteSummaryRequest;
@@ -26,7 +25,7 @@ import java.util.concurrent.CountDownLatch;
 @Slf4j
 public class Main {
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws YFinanceException {
 		testNonDefaultModules();
 //		testWss();
 //		testStockHistory();
@@ -34,7 +33,7 @@ public class Main {
 		testFinancialTimeSeries();
 	}
 
-	private static void testFinancialTimeSeries() throws IOException {
+	private static void testFinancialTimeSeries() throws YFinanceException {
 		IncomeSummary incomeSummary = YFinance.getStockIncomeSummary("AAPL", TimescaleTranslation.QUARTERLY);
 		for (FinancialStatementSummary.FinancialDataPoint financialDataPoint : incomeSummary.getResult().getNetIncome()) {
 			log.info(financialDataPoint.prettyPrint());
@@ -52,18 +51,18 @@ public class Main {
 
 	}
 
-	private static void testStockHistory() throws IOException {
+	private static void testStockHistory() throws YFinanceException {
 		StockHistory stockHistory = YFinance.getStockHistory("ODFL");
 		log.info(stockHistory.prettyPrintChart());
 	}
 
-	private static void testRegionMargetSummary() throws IOException {
+	private static void testRegionMargetSummary() throws YFinanceException {
 		RegionMarketSummary regionMarketSummary = YFinance.getRegionMarketSummary(Region.EUROPE);
 		log.info(regionMarketSummary.getMarketStatus().getFirst().getMessage());
 		log.info(regionMarketSummary.getMarketSummaries().getFirst().getExchangeTimezoneName());
 	}
 
-	private static void testNonDefaultModules() throws IOException {
+	private static void testNonDefaultModules() throws YFinanceException {
 		StockQuoteSummary stockQuoteSummary = YFinance.getStockQuoteSummary("MSFT", QuoteSummaryRequest.Module.SUMMARY_PROFILE, QuoteSummaryRequest.Module.CALENDAR_EVENTS);
 		Optional<SummaryProfile> summaryProfileOptional = stockQuoteSummary.getModule(SummaryProfile.class);
 		summaryProfileOptional.ifPresent(summaryProfile -> log.info(summaryProfile.getAddress1()));

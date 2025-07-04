@@ -3,6 +3,7 @@ package yahoofinance.web;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import yahoofinance.exception.*;
 
 import java.io.IOException;
 import java.net.*;
@@ -31,68 +32,83 @@ public class RedirectableRequest {
 		this.protocolRedirectLimit = Math.max(0, protocolRedirectLimit);
 	}
 
-	public URLConnection openConnection() throws IOException {
+	public URLConnection openConnection() throws YFinanceException {
 		return openConnection(new HashMap<>(), true);
 	}
 
-	public URLConnection openConnection(boolean useCookieAndCrumb) throws IOException {
+	public URLConnection openConnection(boolean useCookieAndCrumb) throws YFinanceException {
 		return openConnection(new HashMap<>(), useCookieAndCrumb);
 	}
 
-	public URLConnection openConnection(Map<String, String> requestProperties, boolean useCookieAndCrumb) throws IOException {
+	public URLConnection openConnection(Map<String, String> requestProperties, boolean useCookieAndCrumb)
+			throws YFinanceException {
 		Map<String, String> enhancedProperties = new HashMap<>(requestProperties);
 
-		if (useCookieAndCrumb) {
-			URL enhancedUrl = enhanceUrlWithCrumb(this.request);
-			enhancedProperties.put("Cookie", CookieManager.getCookie());
-			return executeRequestWithRedirects(enhancedUrl, enhancedProperties);
-		} else {
-			return executeRequestWithRedirects(this.request, requestProperties);
+		try {
+			if (useCookieAndCrumb) {
+				URL enhancedUrl = enhanceUrlWithCrumb(this.request);
+				enhancedProperties.put("Cookie", CookieManager.getCookie());
+				return executeRequestWithRedirects(enhancedUrl, enhancedProperties);
+			} else {
+				return executeRequestWithRedirects(this.request, requestProperties);
+			}
+		} catch (CookieException | CrumbException e) {
+			throw new AuthenticationException("Failed to authenticate with Yahoo Finance", e);
 		}
 	}
 
-	private URLConnection executeRequestWithRedirects(URL initialUrl, Map<String, String> requestProperties) throws IOException {
+	private URLConnection executeRequestWithRedirects(URL initialUrl, Map<String, String> requestProperties)
+			throws ConnectionException {
 		int redirectCount = 0;
 		URL currentUrl = initialUrl;
 
-//		log.debug("Executing request url: {}", currentUrl);
-
 		while (redirectCount <= this.protocolRedirectLimit) {
-			HttpURLConnection connection = createConnection(currentUrl, requestProperties);
+			try {
+				HttpURLConnection connection = createConnection(currentUrl, requestProperties);
 
-			int responseCode = connection.getResponseCode();
+				int responseCode = connection.getResponseCode();
 
-			if (isRedirectResponse(responseCode)) {
-				String location = connection.getHeaderField("Location");
-				if (location == null || location.trim().isEmpty()) {
-					throw new IOException("Redirect response without Location header");
+				if (isRedirectResponse(responseCode)) {
+					String location = connection.getHeaderField("Location");
+					if (location == null || location.trim().isEmpty()) {
+						throw new RedirectException("Redirect response without Location header",
+								redirectCount, this.protocolRedirectLimit, currentUrl.toString());
+					}
+
+					currentUrl = new URL(currentUrl, location);
+					redirectCount++;
+
+					if (redirectCount > this.protocolRedirectLimit) {
+						throw new RedirectException(
+								String.format("Protocol redirect limit exceeded for URL: %s", this.request.toExternalForm()),
+								redirectCount, this.protocolRedirectLimit, currentUrl.toString());
+					}
+
+					connection.disconnect();
+					continue;
 				}
 
-				currentUrl = new URL(currentUrl, location);
-
-				redirectCount++;
-
-				if (redirectCount > this.protocolRedirectLimit) {
-					throw new IOException(
-							String.format("Protocol redirect limit (%d) exceeded for URL: %s",
-									this.protocolRedirectLimit, this.request.toExternalForm()));
+				if (responseCode >= 400) {
+					throw new ConnectionException(
+							String.format("HTTP error response: %d", responseCode),
+							responseCode, currentUrl.toString());
 				}
 
-				connection.disconnect();
-				continue;
+				return connection;
+
+			} catch (IOException e) {
+				throw new ConnectionException("Failed to execute HTTP request", e);
 			}
-
-			return connection;
 		}
 
-		throw new IOException("Unexpected redirect handling error");
+		throw new ConnectionException("Unexpected redirect handling error");
 	}
 
 	private HttpURLConnection createConnection(URL url, Map<String, String> requestProperties) throws IOException {
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setConnectTimeout(this.connectTimeout);
 		connection.setReadTimeout(this.readTimeout);
-		connection.setInstanceFollowRedirects(true);
+		connection.setInstanceFollowRedirects(false);
 
 		connection.setRequestProperty("User-Agent",
 				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
@@ -105,7 +121,7 @@ public class RedirectableRequest {
 		return connection;
 	}
 
-	private URL enhanceUrlWithCrumb(URL originalUrl) throws IOException {
+	private URL enhanceUrlWithCrumb(URL originalUrl) throws CrumbException {
 		try {
 			String crumb = CrumbManager.getCrumb();
 			log.info("Crumb value: {}", crumb);
@@ -126,10 +142,12 @@ public class RedirectableRequest {
 					originalUrl.getRef()
 			);
 
-			return URL.of(uri, null);
+			return uri.toURL();
 
-		} catch (URISyntaxException e) {
-			throw new IOException("Failed to enhance URL with crumb parameter", e);
+		} catch (URISyntaxException | CookieException e) {
+			throw new CrumbException("Failed to enhance URL with crumb parameter", e);
+		} catch (MalformedURLException e) {
+			throw new CrumbException("Failed to parse URI to URL");
 		}
 	}
 
