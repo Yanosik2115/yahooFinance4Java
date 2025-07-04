@@ -16,6 +16,7 @@ import yahoofinance.model.market.RegionMarketSummary;
 import yahoofinance.quotes.*;
 import yahoofinance.service.StockWebSocket;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -79,6 +80,21 @@ public class YFinance {
 	 */
 	public static StockHistory getStockHistory(String ticker, StockHistoryRequest.ValidRanges range, StockHistoryRequest.ValidIntervals interval) throws YFinanceException {
 		QuoteRequest<StockHistory> request = new StockHistoryRequest(ticker, range, interval);
+		return request.execute();
+	}
+
+	public static StockHistory getStockHistory(String ticker, LocalDateTime startDate, LocalDateTime endDate, StockHistoryRequest.ValidIntervals interval) throws YFinanceException {
+		QuoteRequest<StockHistory> request = new StockHistoryRequest(ticker, startDate, endDate, interval);
+		return request.execute();
+	}
+
+	public static StockHistory getStockHistory(String ticker, LocalDateTime startDate, StockHistoryRequest.ValidRanges ranges, StockHistoryRequest.ValidIntervals interval) throws YFinanceException {
+		QuoteRequest<StockHistory> request = new StockHistoryRequest(ticker, startDate, ranges, interval);
+		return request.execute();
+	}
+
+	public static StockHistory getStockHistory(String ticker, StockHistoryRequest.ValidRanges ranges, LocalDateTime endDate, StockHistoryRequest.ValidIntervals interval) throws YFinanceException {
+		QuoteRequest<StockHistory> request = new StockHistoryRequest(ticker, ranges, endDate, interval);
 		return request.execute();
 	}
 

@@ -5,6 +5,10 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import yahoofinance.model.StockHistory;
 
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +21,8 @@ public class StockHistoryRequest extends QuoteRequest<StockHistory> {
 	private static final String STOCK_HISTORY_URL = "https://query2.finance.yahoo.com/v8/finance/chart";
 	private final ValidRanges range;
 	private final ValidIntervals interval;
+	private Long startDate;
+	private Long endDate;
 
 	@Getter
 	public enum ValidRanges {
@@ -31,6 +37,29 @@ public class StockHistoryRequest extends QuoteRequest<StockHistory> {
 		TEN_YEARS("10y"),
 		YTD("ytd"),
 		MAX("max");
+
+		public long getTimeMilisecond() {
+			return switch (this) {
+				case ONE_DAY -> (24 * 60 * 60);
+				case FIVE_DAYS -> (5 * 24 * 60 * 60);
+				case ONE_MONTH -> (30L * 24 * 60 * 60);
+				case THREE_MONTHS -> (90L * 24 * 60 * 60);
+				case SIX_MONTHS -> (180L * 24 * 60 * 60);
+				case ONE_YEAR -> (365L * 24 * 60 * 60);
+				case TWO_YEARS -> (2 * 365L * 24 * 60 * 60);
+				case FIVE_YEARS -> (5 * 365L * 24 * 60 * 60);
+				case TEN_YEARS -> (10 * 365L * 24 * 60 * 60);
+				case YTD -> getYearStartMiliseconds();
+				case MAX -> 0;
+			};
+		}
+
+		private long getYearStartMiliseconds() {
+			LocalDateTime ytd = LocalDateTime.of(LocalDateTime.now().getYear(), 1, 1, 0, 0);
+			LocalDateTime now = LocalDateTime.now();
+
+			return now.toEpochSecond(ZoneOffset.UTC) - ytd.toEpochSecond(ZoneOffset.UTC);
+		}
 
 		private final String range;
 
@@ -47,7 +76,7 @@ public class StockHistoryRequest extends QuoteRequest<StockHistory> {
 		FIFTEEN_MINUTES("15m"),
 		THIRTY_MINUTES("30m"),
 		SIXTY_MINUTES("60m"),
-		NINTY_MINUTES("90m"),
+		NINETY_MINUTES("90m"),
 		ONE_HOUR("1h"),
 		FOUR_HOURS("4h"),
 		ONE_DAY("1d"),
@@ -70,6 +99,38 @@ public class StockHistoryRequest extends QuoteRequest<StockHistory> {
 		this.interval = interval;
 	}
 
+	public StockHistoryRequest(String symbol, LocalDateTime startDate, LocalDateTime endDate, ValidIntervals interval) {
+		super(symbol);
+		this.interval = interval;
+		this.range = null;
+		if (startDate != null)
+			this.startDate = startDate.toEpochSecond(ZoneOffset.UTC);
+		if (endDate != null)
+			this.endDate = endDate.toEpochSecond(ZoneOffset.UTC);
+	}
+
+	public StockHistoryRequest(String symbol, LocalDateTime startDate, ValidRanges range, ValidIntervals interval) {
+		super(symbol);
+		this.interval = interval;
+		this.range = range;
+		if (startDate != null) {
+			this.startDate = startDate.toEpochSecond(ZoneOffset.UTC);
+			this.endDate = startDate.toEpochSecond(ZoneOffset.UTC) + range.getTimeMilisecond();
+		}
+
+	}
+
+	public StockHistoryRequest(String symbol, ValidRanges range, LocalDateTime endDate, ValidIntervals interval) {
+		super(symbol);
+		this.interval = interval;
+		this.range = range;
+		if (endDate != null) {
+			this.startDate = endDate.toEpochSecond(ZoneOffset.UTC) - range.getTimeMilisecond();
+			this.endDate = endDate.toEpochSecond(ZoneOffset.UTC);
+		}
+
+	}
+
 	public StockHistoryRequest(String symbol) {
 		this(symbol, ValidRanges.ONE_MONTH, ValidIntervals.ONE_DAY);
 	}
@@ -78,8 +139,25 @@ public class StockHistoryRequest extends QuoteRequest<StockHistory> {
 	@Override
 	public Map<String, String> getParams() {
 		Map<String, String> params = new HashMap<>();
-		params.put("range", range.getRange());
-		params.put("interval", interval.getInterval());
+
+		if (range != null && startDate == null && endDate == null) {
+			params.put("range", range.getRange());
+		}
+
+		if (interval != null) {
+			params.put("interval", interval.getInterval());
+		} else {
+			params.put("interval", ValidIntervals.ONE_DAY.getInterval());
+		}
+
+		if (startDate != null) {
+			params.put("period1", String.valueOf(startDate));
+		}
+
+		if (endDate != null) {
+			params.put("period2", String.valueOf(endDate));
+		}
+
 		return params;
 	}
 
