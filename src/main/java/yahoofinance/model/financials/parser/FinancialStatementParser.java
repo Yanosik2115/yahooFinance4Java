@@ -35,34 +35,30 @@ public class FinancialStatementParser {
 	                          Supplier<R> resultSupplier, Enum<?>[] enumValues, TimescaleTranslation timescaleTranslation) {
 
 		T summary = summarySupplier.get();
+		R consolidatedResult = resultSupplier.get();
 
-		if (!node.has("timeseries")) {
-			return summary;
-		}
+		List<Long> timestamps = getTimestamps(node);
+		parseAndConsolidateData(node, consolidatedResult, enumValues, timescaleTranslation);
 
-		JsonNode timeseriesNode = node.get("timeseries");
-
-		if (timeseriesNode.has("error") && !timeseriesNode.get("error").isNull()) {
-			summary.setError(timeseriesNode.get("error").asText());
-		}
-
-		if (timeseriesNode.has("result") && timeseriesNode.get("result").isArray()) {
-			R consolidatedResult = resultSupplier.get();
-			List<Long> timestamps = new ArrayList<>();
-
-			JsonNode resultNode = timeseriesNode.get("result");
-			parseAndConsolidateData(resultNode, consolidatedResult, enumValues, timescaleTranslation);
-
-			if (resultNode.has("timestamp")) {
-				for (JsonNode timestampNode : resultNode.get("timestamp")) {
-					timestamps.add(timestampNode.asLong());
-				}
-			}
-			summary.setResult(consolidatedResult);
-			summary.setTimestamp(timestamps);
-		}
+		summary.setResult(consolidatedResult);
+		summary.setTimestamp(timestamps);
 
 		return summary;
+	}
+
+	private static List<Long> getTimestamps(JsonNode resultNode){
+		Iterator<JsonNode> it = resultNode.iterator();
+		List<Long> timestamps = new ArrayList<>();
+		while (it.hasNext()){
+			JsonNode node = it.next();
+			if (node.has("timestamp")) {
+				for (JsonNode timestampNode : node.get("timestamp")) {
+					timestamps.add(timestampNode.asLong());
+				}
+				break;
+			}
+		}
+		return timestamps;
 	}
 
 	private static <R extends FinancialStatementSummary.TimeSeriesResult> void parseAndConsolidateData(

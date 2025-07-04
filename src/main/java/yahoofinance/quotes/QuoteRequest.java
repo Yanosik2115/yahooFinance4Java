@@ -8,6 +8,7 @@ import yahoofinance.exception.YFinanceException;
 import yahoofinance.util.Utils;
 import yahoofinance.web.RedirectableRequest;
 
+import javax.xml.bind.ValidationException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -48,6 +49,28 @@ public abstract class QuoteRequest<T> {
 
 	protected boolean useCookieAndCrumb() {
 		return true;
+	}
+
+	protected boolean extractResultNode() {
+		return true;
+	}
+
+	private JsonNode getResultNode(JsonNode node, String name) throws ValidationException {
+		JsonNode mainNode = node.get(name);
+
+		if (mainNode == null)
+			throw new ValidationException("No node " + name + " available");
+
+		JsonNode errorNode = mainNode.get("error");
+		if (errorNode != null && !errorNode.isNull()) {
+			throw new ValidationException(errorNode.asText());
+		}
+
+		JsonNode resultNode = mainNode.get("result");
+		if (resultNode == null)
+			throw new ValidationException("No result node available");
+
+		return resultNode;
 	}
 
 	protected String buildRequestURL() {
@@ -97,7 +120,7 @@ public abstract class QuoteRequest<T> {
 
 		String requestUrl = buildRequestURL();
 		HttpURLConnection connection = null;
-//		log.debug("Executing request: {}", requestUrl);
+		log.debug("Executing request: {}", requestUrl);
 
 		try {
 			URL url = URI.create(requestUrl).toURL();
@@ -115,8 +138,12 @@ public abstract class QuoteRequest<T> {
 				if (log.isTraceEnabled()) {
 					log.trace("Response JSON: {}", node.toPrettyString());
 				}
-//				log.debug(node.toPrettyString());
+				if (extractResultNode())
+					node = getResultNode(node, node.fieldNames().next());
+
 				return parseJson(node);
+			} catch (ValidationException e) {
+				throw new YFinanceException(e.getMessage());
 			}
 
 		} catch (IOException e) {
@@ -125,7 +152,7 @@ public abstract class QuoteRequest<T> {
 					requiresSymbol() ? symbol : "market data", e.getMessage());
 			throw new ConnectionException("Failed to execute request for " + ticker + ": " + e.getMessage());
 		} finally {
-			if(connection != null)
+			if (connection != null)
 				connection.disconnect();
 		}
 	}

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import yahoofinance.model.StockQuoteSummary;
 import yahoofinance.model.common.QuoteSummaryModule;
 import yahoofinance.model.market.modules.*;
+
 import java.util.*;
 
 @Slf4j
@@ -124,12 +125,12 @@ public class QuoteSummaryRequest extends QuoteRequest<StockQuoteSummary> {
 	}
 
 	@Override
-	public StockQuoteSummary parseJson(JsonNode node) {
+	public StockQuoteSummary parseJson(JsonNode resultNode) {
 		log.debug("Parsing quote summary response for symbol: {} with modules: {}",
 				getSymbol(), requestedModules);
 
 		try {
-			StockQuoteSummary stockQuoteSummary = parseQuoteSummary(node.get("quoteSummary"));
+			StockQuoteSummary stockQuoteSummary = parseQuoteSummary(resultNode);
 			log.debug("Successfully parsed quote summary for symbol: {}", getSymbol());
 			return stockQuoteSummary;
 
@@ -142,23 +143,12 @@ public class QuoteSummaryRequest extends QuoteRequest<StockQuoteSummary> {
 	private StockQuoteSummary parseQuoteSummary(JsonNode quoteSummaryNode) {
 		StockQuoteSummary quoteSummary = new StockQuoteSummary();
 
-		if (quoteSummaryNode == null) {
-			return quoteSummary;
-		}
-
-		// Handle error case
-		JsonNode errorNode = quoteSummaryNode.get("error");
-		if (errorNode != null && !errorNode.isNull()) {
-			quoteSummary.setError(errorNode.asText());
-			return quoteSummary;
-		}
-
-		// Parse results
-		JsonNode resultNode = quoteSummaryNode.get("result");
-		if (resultNode != null && resultNode.isArray() && !resultNode.isEmpty()) {
-			JsonNode firstResult = resultNode.get(0);
+		if (quoteSummaryNode != null && quoteSummaryNode.isArray() && !quoteSummaryNode.isEmpty()) {
+			JsonNode firstResult = quoteSummaryNode.get(0);
 			List<QuoteSummaryModule<?>> modules = parseModules(firstResult);
 			quoteSummary.setModules(modules);
+		} else {
+			log.error("Quote Summary node is null or empty");
 		}
 
 		return quoteSummary;

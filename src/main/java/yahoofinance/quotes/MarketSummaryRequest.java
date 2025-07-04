@@ -57,19 +57,7 @@ public class MarketSummaryRequest extends QuoteRequest<List<RegionMarketSummary.
 		if (node == null || node.isNull()) {
 			return List.of();
 		}
-
-		try {
-			JsonNode marketSummaryNode = node.get("marketSummaryResponse");
-			if (marketSummaryNode != null && !marketSummaryNode.isNull()) {
-				JsonNode resultNode = marketSummaryNode.get("result");
-				if (resultNode != null && resultNode.isArray()) {
-					return parseMarketSummaryResults(resultNode);
-				}
-			}
-		} catch (Exception e) {
-			log.error("Error parsing MarketSummary JSON: {}", e.getMessage(), e);
-		}
-		return List.of();
+		return parseMarketSummaryResults(node);
 	}
 
 	private List<RegionMarketSummary.MarketSummary> parseMarketSummaryResults(JsonNode resultNode) {

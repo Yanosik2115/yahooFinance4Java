@@ -89,27 +89,11 @@ public class StockHistoryRequest extends QuoteRequest<StockHistory> {
 	}
 
 	@Override
-	public StockHistory parseJson(JsonNode node) {
-		if (node == null || node.isNull()) {
+	public StockHistory parseJson(JsonNode resultNode) {
+		if (resultNode == null || resultNode.isNull()) {
 			return null;
 		}
 		StockHistory stockHistory = new StockHistory();
-
-		JsonNode chartNode = node.get("chart");
-
-		if (chartNode == null)
-			return stockHistory;
-
-		JsonNode errorNode = chartNode.get("error");
-		if (errorNode != null && !errorNode.isNull()) {
-			stockHistory.setError(errorNode.asText());
-			return stockHistory;
-		}
-
-		JsonNode resultNode = chartNode.get("result");
-		if (resultNode == null)
-			return stockHistory;
-
 		resultNode = resultNode.get(0);
 
 		try {

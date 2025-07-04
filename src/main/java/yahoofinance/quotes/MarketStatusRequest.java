@@ -24,6 +24,11 @@ public class MarketStatusRequest extends QuoteRequest<List<RegionMarketSummary.M
 	}
 
 	@Override
+	protected boolean extractResultNode() {
+		return false;
+	}
+
+	@Override
 	public String getURL() {
 		return MARKET_STATUS_URL;
 	}
