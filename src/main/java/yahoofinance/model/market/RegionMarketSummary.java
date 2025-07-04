@@ -68,7 +68,7 @@ public class RegionMarketSummary {
 		private String quoteSourceName;
 
 		// Trading flags - Fixed naming
-		private Boolean tradeable; // Fixed from "tradable"
+		private Boolean tradeable;
 		private Boolean cryptoTradeable;
 		private Boolean triggerable;
 		private Boolean hasPrePostMarketData;
@@ -80,7 +80,7 @@ public class RegionMarketSummary {
 
 		// Timing and data info
 		private Long firstTradeDateMilliseconds;
-		private Integer exchangeDataDelayedBy; // Fixed from "exchangeDateDelayedBy"
+		private Integer exchangeDataDelayedBy;
 		private Integer sourceInterval;
 		private Integer priceHint;
 		private String customPriceAlertConfidence;

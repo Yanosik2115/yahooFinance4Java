@@ -58,7 +58,7 @@ public class QuoteSummaryRequest extends QuoteRequest<StockQuoteSummary> {
 
 	private static final String QUOTE_SUMMARY_URL = "https://query2.finance.yahoo.com/v10/finance/quoteSummary";
 
-	private static final Set<Module> DEFAULT_MODULES = Set.of(
+	public static final Set<Module> DEFAULT_MODULES = Set.of(
 			Module.FINANCIAL_DATA,
 			Module.QUOTE_TYPE,
 			Module.DEFAULT_KEY_STATISTICS,

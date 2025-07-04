@@ -125,8 +125,8 @@ public abstract class QuoteRequest<T> {
 					requiresSymbol() ? symbol : "market data", e.getMessage());
 			throw new ConnectionException("Failed to execute request for " + ticker + ": " + e.getMessage());
 		} finally {
-			assert connection != null;
-			connection.disconnect();
+			if(connection != null)
+				connection.disconnect();
 		}
 	}
 

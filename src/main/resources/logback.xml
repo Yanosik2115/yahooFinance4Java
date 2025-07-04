@@ -15,4 +15,7 @@
         <appender-ref ref="CONSOLE"/>
     </root>
 
+    <logger name="org.junit" level="INFO"/>
+    <logger name="org.mockito" level="WARN"/>
+
 </configuration>
