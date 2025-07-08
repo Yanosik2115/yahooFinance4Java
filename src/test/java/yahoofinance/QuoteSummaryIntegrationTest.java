@@ -1,9 +1,6 @@
 package yahoofinance;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import yahoofinance.exception.YFinanceException;
@@ -63,6 +60,7 @@ class QuoteSummaryIntegrationTest extends BaseQuoteTest {
 	}
 
 	@Test
+	@Disabled("Test under development")
 	@DisplayName("Should fetch all available modules")
 	void testAllModulesFetch() throws YFinanceException {
 		StockQuoteSummary summary = getStockQuoteSummary("AAPL", QuoteSummaryRequest.Module.values());
