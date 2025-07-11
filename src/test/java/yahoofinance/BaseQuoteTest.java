@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeAll;
 import yahoofinance.model.StockQuoteSummary;
 import yahoofinance.model.common.QuoteSummaryModule;
 import yahoofinance.model.market.modules.*;
-import yahoofinance.quotes.QuoteSummaryRequest;
+import yahoofinance.requests.QuoteSummaryRequest;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;

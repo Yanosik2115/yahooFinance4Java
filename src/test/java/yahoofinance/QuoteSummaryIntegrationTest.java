@@ -6,7 +6,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import yahoofinance.exception.YFinanceException;
 import yahoofinance.model.StockQuoteSummary;
 import yahoofinance.model.market.modules.*;
-import yahoofinance.quotes.QuoteSummaryRequest;
+import yahoofinance.requests.QuoteSummaryRequest;
 
 import java.util.concurrent.TimeUnit;
 
