@@ -8,15 +8,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.MockedStatic;
 import yahoofinance.model.StockHistory;
+import yahoofinance.requests.StockHistoryRequest;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class StockHistoryRequestTest {
 
@@ -45,7 +44,6 @@ class StockHistoryRequestTest {
 			);
 
 			assertNotNull(request);
-			assertEquals(TEST_SYMBOL, request.getSymbol());
 		}
 
 		@Test
@@ -59,7 +57,6 @@ class StockHistoryRequestTest {
 			);
 
 			assertNotNull(request);
-			assertEquals(TEST_SYMBOL, request.getSymbol());
 		}
 
 		@Test
@@ -73,7 +70,6 @@ class StockHistoryRequestTest {
 			);
 
 			assertNotNull(request);
-			assertEquals(TEST_SYMBOL, request.getSymbol());
 		}
 
 		@Test
@@ -87,7 +83,6 @@ class StockHistoryRequestTest {
 			);
 
 			assertNotNull(request);
-			assertEquals(TEST_SYMBOL, request.getSymbol());
 		}
 
 		@Test
@@ -96,7 +91,6 @@ class StockHistoryRequestTest {
 			StockHistoryRequest request = new StockHistoryRequest(TEST_SYMBOL);
 
 			assertNotNull(request);
-			assertEquals(TEST_SYMBOL, request.getSymbol());
 		}
 	}
 

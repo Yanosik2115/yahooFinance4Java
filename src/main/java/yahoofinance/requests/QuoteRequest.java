@@ -1,4 +1,4 @@
-package yahoofinance.quotes;
+package yahoofinance.requests;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
